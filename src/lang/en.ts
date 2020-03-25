@@ -67,13 +67,15 @@ export default {
     cancel: 'Cancel',
     add_plugin: 'Add Plugin',
     add_node: 'Add Node',
+    add_var: 'Add Var',
     delete: 'Delete',
     addValue: 'Add Value'
   },
   schema: {
     route: {
       inputMultipleValues: 'Input value then press return button',
-      propertyHostsTip: 'Any values are supported'
+      propertyHostsTip: 'Any values are supported',
+      fileterFunc: 'User-defined filtering function，Begins with "function()" and ends with "end".'
     }
   },
   upstream: {

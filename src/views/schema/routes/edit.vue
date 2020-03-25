@@ -194,6 +194,22 @@
           {{ $t('button.add_plugin') }}
         </el-button>
       </el-form-item>
+      <VarArgs
+        :p-vars.sync="form.vars"
+        @onChange="onVarArgsChange"
+      />
+
+      <el-form-item
+        label="filter_func"
+        prop="filter_func"
+      >
+        <el-input
+          v-model="form.filter_func"
+          type="textarea"
+          :autosize="{minRows: 2, maxRows: 4}"
+          :placeholder="$t('schema.route.fileterFunc')"
+        />
+      </el-form-item>
 
       <el-form-item>
         <el-button
@@ -222,6 +238,7 @@ import { Component, Vue } from 'vue-property-decorator'
 import { Form } from 'element-ui'
 
 import PluginDialog from '@/components/PluginDialog/index.vue'
+import VarArgs from '@/components/VarArgs/index.vue'
 
 import { getRouter, createRouter, updateRouter } from '@/api/schema/routes'
 import { getPluginList } from '@/api/schema/plugins'
@@ -229,10 +246,13 @@ import { getUpstreamList } from '@/api/schema/upstream'
 import { getServiceList } from '@/api/schema/services'
 import { TagsViewModule } from '@/store/modules/tags-view'
 
+import i18n from '@/lang'
+
 @Component({
   name: 'RouterEdit',
   components: {
-    PluginDialog
+    PluginDialog,
+    VarArgs
   }
 })
 
@@ -245,17 +265,23 @@ export default class extends Vue {
     service_id: '',
     methods: [],
     plugins: {},
-    desc: ''
+    vars: [],
+    desc: '',
+    filter_func: ''
   }
 
   // TODO: can add existed info from route list
   private ExistedUris = [{}]
   private ExistedHosts = [{}]
+  private validateFilterFuncRegexp = /^function\(\)[^]*?\bend$/
 
   private rules = {
     uris: {
       required: true
-    }
+    },
+    filter_func: [
+      { pattern: this.validateFilterFuncRegexp, trigger: 'blur', message: i18n.t('schema.route.fileterFunc') }
+    ]
   }
   private isEditMode: boolean = false
 
@@ -294,7 +320,9 @@ export default class extends Vue {
       service_id: '',
       methods: [],
       plugins: {},
-      desc: ''
+      vars: [],
+      desc: '',
+      filter_func: ''
     }
   }
 
@@ -338,7 +366,9 @@ export default class extends Vue {
           service_id = '',
           methods = [],
           plugins = {},
-          desc = ''
+          vars = [],
+          desc = '',
+          filter_func = ''
         }
       }
     } = await getRouter(id) as any
@@ -359,12 +389,14 @@ export default class extends Vue {
       service_id,
       methods,
       plugins,
-      desc
+      vars,
+      desc,
+      filter_func
     }
   }
 
   private async onSubmit() {
-    (this.$refs.form as any).validate(async(valid: boolean) => {
+    (this.$refs.form as any).validate(async(valid: boolean, invalidField: any) => {
       if (valid) {
         let data = Object.assign({}, this.form)
         if (!data.methods.length) {
@@ -401,6 +433,9 @@ export default class extends Vue {
           })
         }
       } else {
+        if (invalidField.filter_func) {
+          this.$message.warning(invalidField.filter_func[0].message)
+        }
         return false
       }
     })
@@ -476,6 +511,10 @@ export default class extends Vue {
         Vue.delete(this.form.plugins, name)
       }).catch(() => {})
   }
+
+  private onVarArgsChange(val: any) {
+    this.form.vars = val
+  }
 }
 </script>
 
@@ -494,6 +533,15 @@ export default class extends Vue {
           margin: 0;
           color: #8e8c8c;
         }
+      }
+    }
+  }
+  .var-item {
+    .el-form-item {
+      margin-bottom: 10px;
+      display: inline-block;
+      .el-form-item__content {
+        margin-right: 10px;
       }
     }
   }
